@@ -10,10 +10,60 @@ st.set_page_config(
 
 dataFrame = pd.read_csv(filepath_or_buffer = "startup_cleaned.csv")
 
+dataFrame["date"] = pd.to_datetime(dataFrame["date"], errors='coerce')
+dataFrame['month'] = dataFrame['date'].dt.month
+
 # dataFrame["investor"] = dataFrame["investor"].fillna("Undisclosed")
 # dataFrame.info()
 
 # print(dataFrame.describe())
+
+def load_overall_analysis():
+    st.title("Overall analysis")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    # total investes ammount
+    with col1:
+        total = round(dataFrame['ammount'].sum())
+
+        st.metric(label = "Total", value = str(total) + "Cr")
+
+    # max investedValue
+
+    allInvesments = dataFrame.groupby("startup")['ammount'].sum().sort_values(ascending = False)
+
+    maxInvesment = allInvesments.values[0]
+
+    # topInvestor = allInvesments.index[0]
+
+    avgInvenmentPerStartup = dataFrame.groupby("startup")['ammount'].sum().mean()
+
+    totalNumberOfStartups = dataFrame['startup'].nunique()
+
+    with col2:
+        st.metric(label = "Max Invesment", value = maxInvesment)
+
+    #top Investror
+
+    with col3:
+        # st.metric(label = "Top Investor", value = topInvestor)
+        st.metric(label = "Avg", value = str(round(avgInvenmentPerStartup)) + "Cr")
+
+    with col4:
+        st.metric(label = "Number of Startups", value = totalNumberOfStartups)
+
+
+    st.header("MoM Invesment")
+
+    temp_df = dataFrame.groupby(['year', "month"])['ammount'].sum().reset_index()
+    temp_df['x_axis'] = dataFrame['month'].astype("str") + "-" + dataFrame['year'].astype('str')
+
+    fig, ax = plt.subplots()
+
+    ax.bar(temp_df['x_axis'], temp_df['ammount'])
+
+    st.pyplot(fig)
 
 def load_investor_details(investor):
     st.title(investor)
@@ -135,7 +185,11 @@ option = st.sidebar.selectbox(
 
 
 if option == options[0]:
-    st.title("Overall analysis")
+    # st.title("Overall analysis")
+    btn0 = st.sidebar.button(label = "show overall analysis")
+
+    if btn0:
+        load_overall_analysis()
 elif option == options[1]:
     st.sidebar.selectbox(
         label= "Select startup",
